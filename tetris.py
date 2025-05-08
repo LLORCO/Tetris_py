@@ -137,6 +137,12 @@ class Tetris:
         texto = fuente.render(f"Puntuación: {self.puntuacion}", True, BLANCO)
         self.pantalla.blit(texto, (ANCHO_TABLERO * ANCHO_BLOQUE + 10, 10))
 
+    def caida_inmediata(self):
+        # Mover la pieza hacia abajo hasta que colisione
+        while not self.colision(dy=1):
+            self.pieza_actual.y += 1
+        self.fijar_pieza()
+
     def ejecutar(self):
         while not self.juego_terminado:
             tiempo_actual = pygame.time.get_ticks()
@@ -162,6 +168,8 @@ class Tetris:
                         self.pieza_actual.rotar()
                         if self.colision():
                             self.pieza_actual.forma = pieza_anterior
+                    elif evento.key == pygame.K_SPACE:  # Nueva tecla para caída inmediata
+                        self.caida_inmediata()
 
             self.pantalla.fill(NEGRO)
             self.dibujar_tablero()
