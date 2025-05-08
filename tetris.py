@@ -60,6 +60,8 @@ class Tetris:
         self.velocidad_base = 0.5
         self.velocidad = self.velocidad_base
         self.tiempo_anterior = pygame.time.get_ticks()
+        self.mostrar_tetris = False
+        self.tiempo_tetris = 0
 
     def actualizar_nivel(self):
         # Subir de nivel cada 10 líneas
@@ -130,6 +132,18 @@ class Tetris:
         if self.colision():
             self.juego_terminado = True
 
+    def dibujar_mensaje_tetris(self):
+        if self.mostrar_tetris:
+            tiempo_actual = pygame.time.get_ticks()
+            if tiempo_actual - self.tiempo_tetris < 1000:  # Mostrar por 1 segundo
+                fuente = pygame.font.Font(None, 72)
+                texto = fuente.render("TETRIS!!", True, AMARILLO)
+                # Posicionar en la misma línea que GAME OVER
+                texto_rect = texto.get_rect(center=(ANCHO_TABLERO * ANCHO_BLOQUE + 110, 350))
+                self.pantalla.blit(texto, texto_rect)
+            else:
+                self.mostrar_tetris = False
+
     def eliminar_lineas(self):
         lineas_eliminadas = 0
         y = ALTO_TABLERO - 1
@@ -147,8 +161,18 @@ class Tetris:
             puntos_base = 100
             # Multiplicador por nivel
             multiplicador = self.nivel
+            
             # Bonus por múltiples líneas
-            bonus = 1.5 if lineas_eliminadas > 1 else 1
+            if lineas_eliminadas == 4:
+                bonus = 4  # Tetris
+                self.mostrar_tetris = True
+                self.tiempo_tetris = pygame.time.get_ticks()
+            elif lineas_eliminadas == 3:
+                bonus = 2.5  # Triple
+            elif lineas_eliminadas == 2:
+                bonus = 1.5  # Doble
+            else:
+                bonus = 1  # Línea simple
             
             self.puntuacion += int(puntos_base * lineas_eliminadas * multiplicador * bonus)
             self.lineas_completadas += lineas_eliminadas
@@ -207,13 +231,15 @@ class Tetris:
             self.dibujar_pieza()
             self.dibujar_siguiente_pieza()
             self.dibujar_puntuacion()
+            self.dibujar_mensaje_tetris()
             pygame.display.flip()
             self.reloj.tick(60)
 
         # Pantalla de Game Over
         fuente = pygame.font.Font(None, 48)
-        texto = fuente.render("¡GAME OVER!", True, ROJO)
-        texto_rect = texto.get_rect(center=(ANCHO_VENTANA/2, ALTO_VENTANA/2))
+        texto = fuente.render("GAME OVER", True, ROJO)
+        # Posicionar más a la derecha
+        texto_rect = texto.get_rect(center=(ANCHO_TABLERO * ANCHO_BLOQUE + 110, 350))
         self.pantalla.blit(texto, texto_rect)
         pygame.display.flip()
         pygame.time.wait(2000)
