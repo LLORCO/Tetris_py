@@ -52,6 +52,7 @@ class Tetris:
         self.reloj = pygame.time.Clock() 
         self.tablero = [[0 for _ in range(ANCHO_TABLERO)] for _ in range(ALTO_TABLERO)]
         self.pieza_actual = Pieza()
+        self.siguiente_pieza = Pieza()  # Nueva pieza para mostrar
         self.puntuacion = 0
         self.juego_terminado = False
         self.velocidad = 0.5
@@ -75,6 +76,26 @@ class Tetris:
                                     (self.pieza_actual.y + y) * ALTO_BLOQUE + 1,
                                     ANCHO_BLOQUE - 2, ALTO_BLOQUE - 2])
 
+    def dibujar_siguiente_pieza(self):
+        # Dibujar el área de la siguiente pieza
+        area_x = ANCHO_TABLERO * ANCHO_BLOQUE + 20
+        area_y = 100
+        pygame.draw.rect(self.pantalla, GRIS, [area_x, area_y, 5 * ANCHO_BLOQUE, 5 * ALTO_BLOQUE], 1)
+        
+        # Dibujar el texto "Siguiente"
+        fuente = pygame.font.Font(None, 36)
+        texto = fuente.render("Siguiente:", True, BLANCO)
+        self.pantalla.blit(texto, (area_x, area_y - 40))
+
+        # Dibujar la siguiente pieza
+        for y, fila in enumerate(self.siguiente_pieza.forma):
+            for x, celda in enumerate(fila):
+                if celda:
+                    pygame.draw.rect(self.pantalla, self.siguiente_pieza.color,
+                                   [area_x + (x + 1) * ANCHO_BLOQUE + 1,
+                                    area_y + (y + 1) * ALTO_BLOQUE + 1,
+                                    ANCHO_BLOQUE - 2, ALTO_BLOQUE - 2])
+
     def colision(self, dx=0, dy=0):
         for y, fila in enumerate(self.pieza_actual.forma):
             for x, celda in enumerate(fila):
@@ -93,7 +114,8 @@ class Tetris:
                 if celda:
                     self.tablero[self.pieza_actual.y + y][self.pieza_actual.x + x] = self.pieza_actual.color
         self.eliminar_lineas()
-        self.pieza_actual = Pieza()
+        self.pieza_actual = self.siguiente_pieza  # Usar la siguiente pieza
+        self.siguiente_pieza = Pieza()  # Generar nueva siguiente pieza
         if self.colision():
             self.juego_terminado = True
 
@@ -144,6 +166,7 @@ class Tetris:
             self.pantalla.fill(NEGRO)
             self.dibujar_tablero()
             self.dibujar_pieza()
+            self.dibujar_siguiente_pieza()  # Dibujar la siguiente pieza
             self.dibujar_puntuacion()
             pygame.display.flip()
             self.reloj.tick(60)
