@@ -52,11 +52,22 @@ class Tetris:
         self.reloj = pygame.time.Clock() 
         self.tablero = [[0 for _ in range(ANCHO_TABLERO)] for _ in range(ALTO_TABLERO)]
         self.pieza_actual = Pieza()
-        self.siguiente_pieza = Pieza()  # Nueva pieza para mostrar
+        self.siguiente_pieza = Pieza()
         self.puntuacion = 0
+        self.nivel = 1
+        self.lineas_completadas = 0
         self.juego_terminado = False
-        self.velocidad = 0.5
+        self.velocidad_base = 0.5
+        self.velocidad = self.velocidad_base
         self.tiempo_anterior = pygame.time.get_ticks()
+
+    def actualizar_nivel(self):
+        # Subir de nivel cada 10 líneas
+        nuevo_nivel = (self.lineas_completadas // 10) + 1
+        if nuevo_nivel > self.nivel:
+            self.nivel = nuevo_nivel
+            # Aumentar la velocidad con cada nivel (máximo 0.1 segundos)
+            self.velocidad = max(0.1, self.velocidad_base - (self.nivel - 1) * 0.05)
 
     def dibujar_tablero(self):
         for y in range(ALTO_TABLERO):
@@ -78,8 +89,8 @@ class Tetris:
 
     def dibujar_siguiente_pieza(self):
         # Dibujar el área de la siguiente pieza
-        area_x = ANCHO_TABLERO * ANCHO_BLOQUE + 20
-        area_y = 100
+        area_x = ANCHO_TABLERO * ANCHO_BLOQUE + 10
+        area_y = 170  # Movido más abajo para evitar superposición
         pygame.draw.rect(self.pantalla, GRIS, [area_x, area_y, 5 * ANCHO_BLOQUE, 5 * ALTO_BLOQUE], 1)
         
         # Dibujar el texto "Siguiente"
@@ -130,12 +141,32 @@ class Tetris:
                 self.tablero[0] = [0] * ANCHO_TABLERO
             else:
                 y -= 1
-        self.puntuacion += lineas_eliminadas * 100
+        
+        if lineas_eliminadas > 0:
+            # Puntos base por línea
+            puntos_base = 100
+            # Multiplicador por nivel
+            multiplicador = self.nivel
+            # Bonus por múltiples líneas
+            bonus = 1.5 if lineas_eliminadas > 1 else 1
+            
+            self.puntuacion += int(puntos_base * lineas_eliminadas * multiplicador * bonus)
+            self.lineas_completadas += lineas_eliminadas
+            self.actualizar_nivel()
 
     def dibujar_puntuacion(self):
         fuente = pygame.font.Font(None, 36)
-        texto = fuente.render(f"Puntuación: {self.puntuacion}", True, BLANCO)
-        self.pantalla.blit(texto, (ANCHO_TABLERO * ANCHO_BLOQUE + 10, 10))
+        # Mostrar puntuación
+        texto_puntuacion = fuente.render(f"Puntuación: {self.puntuacion}", True, BLANCO)
+        self.pantalla.blit(texto_puntuacion, (ANCHO_TABLERO * ANCHO_BLOQUE + 10, 10))
+        
+        # Mostrar nivel
+        texto_nivel = fuente.render(f"Nivel: {self.nivel}", True, BLANCO)
+        self.pantalla.blit(texto_nivel, (ANCHO_TABLERO * ANCHO_BLOQUE + 10, 50))
+        
+        # Mostrar líneas completadas
+        texto_lineas = fuente.render(f"Líneas: {self.lineas_completadas}", True, BLANCO)
+        self.pantalla.blit(texto_lineas, (ANCHO_TABLERO * ANCHO_BLOQUE + 10, 90))
 
     def caida_inmediata(self):
         # Mover la pieza hacia abajo hasta que colisione
@@ -168,13 +199,13 @@ class Tetris:
                         self.pieza_actual.rotar()
                         if self.colision():
                             self.pieza_actual.forma = pieza_anterior
-                    elif evento.key == pygame.K_SPACE:  # Nueva tecla para caída inmediata
+                    elif evento.key == pygame.K_SPACE:
                         self.caida_inmediata()
 
             self.pantalla.fill(NEGRO)
             self.dibujar_tablero()
             self.dibujar_pieza()
-            self.dibujar_siguiente_pieza()  # Dibujar la siguiente pieza
+            self.dibujar_siguiente_pieza()
             self.dibujar_puntuacion()
             pygame.display.flip()
             self.reloj.tick(60)
