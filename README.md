@@ -11,7 +11,7 @@ Un clásico juego de Tetris implementado en Python usando Pygame.
 
 ## Requisitos
 
-- Python 3.x
+- Python 3.11.x
 - Pygame
 
 ## Instalación
